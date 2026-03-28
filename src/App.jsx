@@ -21,6 +21,14 @@ import {
 import { firebaseAuth, isFirebaseConfigured } from './lib/firebase';
 import { resolveUserRole } from './lib/authRole';
 import {
+  saveMeeting,
+  saveTicket,
+  subscribeMeetings,
+  subscribeTickets,
+  updateMeetingStatus,
+  updateTicketStatus,
+} from './lib/firebaseDB';
+import {
   DEFAULT_PROFILE,
   DEFAULT_SKILLS,
   DEFAULT_PROJECTS,
@@ -86,6 +94,28 @@ function App() {
       }
     });
 
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to meetings from Firestore
+  useEffect(() => {
+    if (!isFirebaseConfigured) return () => {};
+    
+    const unsubscribe = subscribeMeetings((meetingsList) => {
+      setMeetings(meetingsList);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to support tickets from Firestore
+  useEffect(() => {
+    if (!isFirebaseConfigured) return () => {};
+    
+    const unsubscribe = subscribeTickets((ticketsList) => {
+      setSupport(ticketsList);
+    });
+    
     return () => unsubscribe();
   }, []);
 
@@ -166,8 +196,17 @@ function App() {
     if (collectionName === 'education') setEducation(data.list);
     if (collectionName === 'testimonials') setTestimonials(data.list);
     if (collectionName === 'services') setServices(data.list);
-    if (collectionName === 'meetings') setMeetings(data.list);
-    if (collectionName === 'support') setSupport(data.list);
+    
+    // Meetings and support tickets are persisted to Firestore
+    if (collectionName === 'meetings') {
+      // Meetings are synced from Firestore automatically
+      setMeetings(data.list);
+    }
+    if (collectionName === 'support') {
+      // Support tickets are synced from Firestore automatically
+      setSupport(data.list);
+    }
+    
     showToast(`${collectionName.charAt(0).toUpperCase() + collectionName.slice(1)} updated!`);
   };
 
@@ -252,6 +291,10 @@ function App() {
             support={support}
             services={services}
             saveData={saveData}
+            saveMeeting={saveMeeting}
+            saveTicket={saveTicket}
+            updateMeetingStatus={updateMeetingStatus}
+            updateTicketStatus={updateTicketStatus}
             onLogout={handleLogout}
           />
         )}

@@ -28,6 +28,10 @@ export function Dashboard({
   support,
   services,
   saveData,
+  saveMeeting,
+  saveTicket,
+  updateMeetingStatus,
+  updateTicketStatus,
   onLogout,
 }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -107,47 +111,51 @@ export function Dashboard({
       const service = services.find((s) => s.id === id);
       return acc + (service ? service.price : 0);
     }, 0);
-  const requestMeeting = () => {
+  const requestMeeting = async () => {
     if (!meetingForm.date || !meetingForm.time) return;
-    saveData('meetings', {
-      list: [
-        ...meetings,
-        {
-          id: Date.now(),
-          client: user.name,
-          date: meetingForm.date,
-          time: meetingForm.time,
-          topic: meetingForm.topic,
-          status: 'Pending',
-        },
-      ],
-    });
-    setMeetingForm({ date: '', time: '', topic: '' });
+    try {
+      await saveMeeting({
+        client: user.name,
+        date: meetingForm.date,
+        time: meetingForm.time,
+        topic: meetingForm.topic,
+        status: 'Pending',
+      });
+      setMeetingForm({ date: '', time: '', topic: '' });
+    } catch (error) {
+      console.error('Error creating meeting:', error);
+    }
   };
-  const confirmMeeting = (id) =>
-    saveData(
-      'meetings',
-      { list: meetings.map((m) => (m.id === id ? { ...m, status: 'Confirmed' } : m)) }
-    );
-  const createTicket = () => {
+  const confirmMeeting = async (id) => {
+    try {
+      await updateMeetingStatus(id, 'Confirmed');
+    } catch (error) {
+      console.error('Error confirming meeting:', error);
+    }
+  };
+  const createTicket = async () => {
     if (!ticketForm.subject) return;
-    saveData('support', {
-      list: [
-        ...support,
-        {
-          id: Date.now(),
-          client: user.name,
-          subject: ticketForm.subject,
-          priority: ticketForm.priority,
-          status: 'Open',
-          date: new Date().toISOString().split('T')[0],
-        },
-      ],
-    });
-    setTicketForm({ subject: '', priority: 'Medium', message: '' });
+    try {
+      await saveTicket({
+        client: user.name,
+        subject: ticketForm.subject,
+        priority: ticketForm.priority,
+        status: 'Open',
+        message: ticketForm.message,
+        date: new Date().toISOString().split('T')[0],
+      });
+      setTicketForm({ subject: '', priority: 'Medium', message: '' });
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+    }
   };
-  const updateTicketStatus = (id, newStatus) =>
-    saveData('support', { list: support.map((t) => (t.id === id ? { ...t, status: newStatus } : t)) });
+  const handleUpdateTicketStatus = async (id, newStatus) => {
+    try {
+      await updateTicketStatus(id, newStatus);
+    } catch (error) {
+      console.error('Error updating ticket:', error);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -968,7 +976,7 @@ function SupportTab({ isAdmin, support, user, ticketForm, setTicketForm, createT
                   {isAdmin ? (
                     <select
                       value={t.status}
-                      onChange={(e) => updateTicketStatus(t.id, e.target.value)}
+                      onChange={(e) => handleUpdateTicketStatus(t.id, e.target.value)}
                       className="bg-black/40 text-white text-sm px-3 py-2 rounded-lg border border-white/10 outline-none"
                     >
                       <option>Open</option>

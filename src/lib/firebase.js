@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const requiredKeys = [
   'VITE_FIREBASE_API_KEY',
@@ -33,6 +34,7 @@ const firebaseConfig = isFirebaseConfigured
 
 export const firebaseApp = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const firebaseAuth = isFirebaseConfigured ? getAuth(firebaseApp) : null;
+export const firebaseDB = isFirebaseConfigured ? getFirestore(firebaseApp) : null;
 
 export let firebaseAnalytics = null;
 
