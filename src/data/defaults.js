@@ -366,4 +366,6 @@ export const DEFAULT_SERVICES = [
     features: ['API Reference', 'User Guides', 'Tutorials', 'Release Notes'],
     icon: 'FileText'
   }
-];
+  ];
+
+  export const DEFAULT_SERVICE_REQUESTS = [];

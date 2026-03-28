@@ -32,6 +32,9 @@ export function Dashboard({
   saveTicket,
   updateMeetingStatus,
   updateTicketStatus,
+  serviceRequests,
+  saveServiceRequest,
+  updateServiceRequestStatus,
   onLogout,
 }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -157,6 +160,33 @@ export function Dashboard({
     }
   };
 
+    const handleRequestQuote = async () => {
+      if (selectedServices.length === 0) return;
+      try {
+        const selectedServiceDetails = services.filter((s) => selectedServices.includes(s.id));
+        const totalPrice = selectedServiceDetails.reduce((sum, s) => sum + s.price, 0);
+        await saveServiceRequest({
+          client: user.name,
+          email: user.email,
+          services: selectedServiceDetails,
+          totalEstimate: totalPrice,
+          status: 'Pending',
+          notes: '',
+        });
+        setSelectedServices([]);
+      } catch (error) {
+        console.error('Error requesting quote:', error);
+      }
+    };
+
+    const handleUpdateServiceRequestStatus = async (id, newStatus) => {
+      try {
+        await updateServiceRequestStatus(id, newStatus);
+      } catch (error) {
+        console.error('Error updating service request:', error);
+      }
+    };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col md:flex-row gap-8 relative">
@@ -176,7 +206,7 @@ export function Dashboard({
           </div>
           <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
             {isAdmin
-              ? ['overview', 'edit-profile', 'edit-projects', 'edit-edu', 'edit-services', 'edit-testimonials', 'meetings', 'support'].map((tab) => (
+                ? ['overview', 'edit-profile', 'edit-projects', 'edit-edu', 'edit-services', 'edit-testimonials', 'meetings', 'support', 'service-requests'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -194,6 +224,7 @@ export function Dashboard({
                     {tab === 'edit-testimonials' && <MessageSquare size={20} />}
                     {tab === 'meetings' && <Clock size={20} />}
                     {tab === 'support' && <AlertCircle size={20} />}
+                      {tab === 'service-requests' && <DollarSign size={20} />}
                     <span className="capitalize">
                       {tab.replace('edit-', '').replace('edu', 'education')}
                     </span>
@@ -249,9 +280,13 @@ export function Dashboard({
                   <span className="text-xs text-slate-500 font-medium">USD</span>
                 </div>
               </div>
-              <button className="w-full glass-panel text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-white/10 hover:scale-105 transition-all shadow-lg">
-                Request Quote <ArrowRight size={16} />
-              </button>
+                <button 
+                  onClick={handleRequestQuote}
+                  disabled={selectedServices.length === 0}
+                  className="w-full glass-panel text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-white/10 hover:scale-105 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Request Quote <ArrowRight size={16} />
+                </button>
             </div>
           )}
           <div className="p-4 border-t border-white/10 bg-black/20">
@@ -354,6 +389,65 @@ export function Dashboard({
               updateTicketStatus={updateTicketStatus}
             />
           )}
+            {/* Service Requests */}
+            {activeTab === 'service-requests' && isAdmin && (
+              <div className="space-y-6">
+                <div className="glass-panel rounded-3xl p-8">
+                  <h2 className="text-2xl font-bold text-white mb-2">Service Quote Requests</h2>
+                  <p className="text-slate-400">Manage incoming service requests from clients</p>
+                </div>
+                {serviceRequests.length === 0 ? (
+                  <div className="glass-panel rounded-3xl p-12 text-center">
+                    <DollarSign size={48} className="mx-auto mb-4 text-slate-500" />
+                    <p className="text-slate-400">No service requests yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {serviceRequests.map((request) => (
+                      <div key={request.id} className="glass-panel rounded-3xl p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-bold text-white">{request.client}</h3>
+                            <p className="text-sm text-slate-400">{request.email}</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {new Date(request.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <select
+                            value={request.status}
+                            onChange={(e) => handleUpdateServiceRequestStatus(request.id, e.target.value)}
+                            className="bg-black/40 text-white text-sm px-3 py-2 rounded-lg border border-white/10 outline-none"
+                          >
+                            <option>Pending</option>
+                            <option>Reviewed</option>
+                            <option>Quoted</option>
+                            <option>Approved</option>
+                            <option>Declined</option>
+                          </select>
+                        </div>
+                        <div className="mb-4">
+                          <p className="text-sm text-slate-300 font-semibold mb-2">Selected Services:</p>
+                          <div className="space-y-2">
+                            {request.services && request.services.map((svc) => (
+                              <div key={svc.id} className="flex justify-between items-center text-sm bg-black/20 p-3 rounded-lg">
+                                <span className="text-slate-200">{svc.name}</span>
+                                <span className="text-purple-300 font-semibold">${svc.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                          <div>
+                            <p className="text-xs text-slate-400 mb-1">Total Estimate</p>
+                            <p className="text-2xl font-bold text-white">${request.totalEstimate}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
     </div>

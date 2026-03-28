@@ -27,6 +27,9 @@ import {
   subscribeTickets,
   updateMeetingStatus,
   updateTicketStatus,
+  saveServiceRequest,
+  subscribeServiceRequests,
+  updateServiceRequestStatus,
 } from './lib/firebaseDB';
 import {
   DEFAULT_PROFILE,
@@ -37,6 +40,7 @@ import {
   DEFAULT_MEETINGS,
   DEFAULT_SUPPORT,
   DEFAULT_SERVICES,
+  DEFAULT_SERVICE_REQUESTS,
 } from './data/defaults';
 
 function App() {
@@ -56,6 +60,7 @@ function App() {
   const [meetings, setMeetings] = useState(DEFAULT_MEETINGS);
   const [support, setSupport] = useState(DEFAULT_SUPPORT);
   const [services, setServices] = useState(DEFAULT_SERVICES);
+    const [serviceRequests, setServiceRequests] = useState(DEFAULT_SERVICE_REQUESTS);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -118,6 +123,17 @@ function App() {
     
     return () => unsubscribe();
   }, []);
+
+    // Subscribe to service requests from Firestore
+    useEffect(() => {
+      if (!isFirebaseConfigured) return () => {};
+    
+      const unsubscribe = subscribeServiceRequests((requestsList) => {
+        setServiceRequests(requestsList);
+      });
+    
+      return () => unsubscribe();
+    }, []);
 
   const showToast = (msg) => {
     setNotification(msg);
@@ -295,6 +311,9 @@ function App() {
             saveTicket={saveTicket}
             updateMeetingStatus={updateMeetingStatus}
             updateTicketStatus={updateTicketStatus}
+              serviceRequests={serviceRequests}
+              saveServiceRequest={saveServiceRequest}
+              updateServiceRequestStatus={updateServiceRequestStatus}
             onLogout={handleLogout}
           />
         )}

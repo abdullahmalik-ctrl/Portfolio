@@ -148,4 +148,74 @@ export const deleteTicket = async (ticketId) => {
     console.error('Error deleting ticket:', error);
     throw error;
   }
+  };
+
+  /**
+   * Save a new service request/quote to Firestore
+   */
+  export const saveServiceRequest = async (request) => {
+    if (!isFirebaseConfigured) return;
+  
+    const requestId = `request-${Date.now()}`;
+    try {
+      await setDoc(doc(firebaseDB, 'serviceRequests', requestId), {
+        ...request,
+        id: requestId,
+        createdAt: new Date().toISOString(),
+      });
+      return requestId;
+    } catch (error) {
+      console.error('Error saving service request:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Subscribe to service requests changes in real-time
+   */
+  export const subscribeServiceRequests = (callback) => {
+    if (!isFirebaseConfigured) return () => {};
+  
+    const q = query(collection(firebaseDB, 'serviceRequests'), orderBy('createdAt', 'desc'));
+  
+    try {
+      return onSnapshot(q, (querySnapshot) => {
+        const requests = [];
+        querySnapshot.forEach((doc) => {
+          requests.push(doc.data());
+        });
+        callback(requests);
+      });
+    } catch (error) {
+      console.error('Error subscribing to service requests:', error);
+      return () => {};
+    }
+  };
+
+  /**
+   * Update service request status
+   */
+  export const updateServiceRequestStatus = async (requestId, status) => {
+    if (!isFirebaseConfigured) return;
+  
+    try {
+      await updateDoc(doc(firebaseDB, 'serviceRequests', requestId), { status });
+    } catch (error) {
+      console.error('Error updating service request:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Delete a service request
+   */
+  export const deleteServiceRequest = async (requestId) => {
+    if (!isFirebaseConfigured) return;
+  
+    try {
+      await deleteDoc(doc(firebaseDB, 'serviceRequests', requestId));
+    } catch (error) {
+      console.error('Error deleting service request:', error);
+      throw error;
+    }
 };
