@@ -1070,7 +1070,7 @@ function SupportTab({ isAdmin, support, user, ticketForm, setTicketForm, createT
                   {isAdmin ? (
                     <select
                       value={t.status}
-                      onChange={(e) => handleUpdateTicketStatus(t.id, e.target.value)}
+                      onChange={(e) => updateTicketStatus(t.id, e.target.value)}
                       className="bg-black/40 text-white text-sm px-3 py-2 rounded-lg border border-white/10 outline-none"
                     >
                       <option>Open</option>
