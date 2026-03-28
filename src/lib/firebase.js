@@ -12,28 +12,31 @@ const requiredKeys = [
 ];
 
 const missingKeys = requiredKeys.filter((key) => !import.meta.env[key]);
+export const isFirebaseConfigured = missingKeys.length === 0;
 
-if (missingKeys.length > 0) {
+if (!isFirebaseConfigured) {
   console.error('Missing Firebase env vars:', missingKeys.join(', '));
-  throw new Error('Firebase config is incomplete. Add required VITE_FIREBASE_* values.');
+  console.warn('Firebase is disabled. Portfolio will run without live auth features.');
 }
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
+const firebaseConfig = isFirebaseConfigured
+  ? {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      appId: import.meta.env.VITE_FIREBASE_APP_ID,
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    }
+  : null;
 
-export const firebaseApp = initializeApp(firebaseConfig);
-export const firebaseAuth = getAuth(firebaseApp);
+export const firebaseApp = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
+export const firebaseAuth = isFirebaseConfigured ? getAuth(firebaseApp) : null;
 
 export let firebaseAnalytics = null;
 
-if (typeof window !== 'undefined') {
+if (isFirebaseConfigured && typeof window !== 'undefined') {
   isSupported()
     .then((supported) => {
       if (supported && firebaseConfig.measurementId) {

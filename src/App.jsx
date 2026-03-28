@@ -18,7 +18,7 @@ import {
   signOut,
   updateProfile,
 } from 'firebase/auth';
-import { firebaseAuth } from './lib/firebase';
+import { firebaseAuth, isFirebaseConfigured } from './lib/firebase';
 import { resolveUserRole } from './lib/authRole';
 import {
   DEFAULT_PROFILE,
@@ -60,6 +60,11 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setLoading(false);
+      return () => {};
+    }
+
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
@@ -96,6 +101,10 @@ function App() {
   };
 
   const handleLogin = async (email, password) => {
+    if (!isFirebaseConfigured) {
+      throw Object.assign(new Error('Auth unavailable'), { code: 'auth/unavailable' });
+    }
+
     const credentials = await signInWithEmailAndPassword(firebaseAuth, email, password);
     const role = await resolveUserRole(credentials.user);
 
@@ -104,6 +113,10 @@ function App() {
   };
 
   const handleSignUp = async (name, email, password) => {
+    if (!isFirebaseConfigured) {
+      throw Object.assign(new Error('Auth unavailable'), { code: 'auth/unavailable' });
+    }
+
     const credentials = await createUserWithEmailAndPassword(firebaseAuth, email, password);
 
     if (name && name.trim()) {
@@ -115,11 +128,19 @@ function App() {
   };
 
   const handleForgotPassword = async (email) => {
+    if (!isFirebaseConfigured) {
+      throw Object.assign(new Error('Auth unavailable'), { code: 'auth/unavailable' });
+    }
+
     await sendPasswordResetEmail(firebaseAuth, email);
     showToast('Password reset email sent. Check your inbox.');
   };
 
   const handleGoogleLogin = async () => {
+    if (!isFirebaseConfigured) {
+      throw Object.assign(new Error('Auth unavailable'), { code: 'auth/unavailable' });
+    }
+
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -131,7 +152,9 @@ function App() {
   };
 
   const handleLogout = async () => {
-    await signOut(firebaseAuth);
+    if (isFirebaseConfigured) {
+      await signOut(firebaseAuth);
+    }
     navigate('home');
     showToast('Logged out');
   };

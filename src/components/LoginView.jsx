@@ -8,6 +8,9 @@ const AUTH_MODES = {
 };
 
 function mapAuthError(error) {
+  if (error.code === 'auth/unavailable') {
+    return 'Login is disabled in this public demo build.';
+  }
   if (error.code === 'auth/invalid-credential') return 'Invalid email or password.';
   if (error.code === 'auth/email-already-in-use') return 'This email is already in use.';
   if (error.code === 'auth/invalid-email') return 'Please enter a valid email address.';
